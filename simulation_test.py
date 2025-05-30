@@ -54,7 +54,7 @@ ax.set_zlim(-SIMULATION_RADIUS, SIMULATION_RADIUS)
 
 sc = ax.scatter(body_locations[:, 0], body_locations[:, 1], body_locations[:, 2], alpha=0.6)
 
-ax.set_title("3D Scatter Plot of Normally Distributed Points")
+ax.set_title("3D Scatter Plot of Uniformly Distributed Points")
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
 ax.set_zlabel("Z")
