@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+# Idea for project: do the moons of Jupiter with an animation
+
 # In this test I want to create a bunch of point-bodies in 3d space and simulate their
 # gravitational interactions. This should produce a cloud of points with some flying
 # off outside of the simulation bounds.
