@@ -82,7 +82,7 @@ fig = plt.figure()
 
 try:
     fig.canvas.manager.window.wm_geometry("+100+100")
-    fig.canvas.manager.window.geometry("800x600")
+    fig.canvas.manager.window.geometry("640x480")
 except AttributeError:
     print("Your backend may not support window resizing")
 
@@ -94,7 +94,7 @@ ax.set_zlim(-SIMULATION_RADIUS, SIMULATION_RADIUS)
 
 sc = ax.scatter(body_locations[:, 0], body_locations[:, 1], body_locations[:, 2], alpha=0.6)
 
-ax.set_title("Basic Simulation of Randomly Generated Astronomical Bodies")
+ax.set_title("Sample Orbits Simulation")
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
 ax.set_zlabel("Z")
@@ -111,6 +111,6 @@ def update(frame):
     sc._offsets3d = (body_locations[:, 0], body_locations[:, 1], body_locations[:, 2])
     return sc,
 
-ani = FuncAnimation(fig, update, frames=1000, interval=50, blit=False)
+ani = FuncAnimation(fig, update, frames=200, interval=50, blit=False)
 
-plt.show()
+ani.save("output_sample_orbits.gif", writer="pillow", fps=30)
