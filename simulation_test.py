@@ -28,17 +28,51 @@ from matplotlib.animation import FuncAnimation
 #
 # * [X] Decide on units.
 # * [X] Generate some points in 3D space and plot them.
-# * [ ] Give the points velocity and have them move in space.
-# * [ ] Give the points some mass.
-# * [ ] Simulate gravitational interaction between the bodies.
+# * [X] Give the points velocity and have them move in space.
+# * [X] Give the points some mass.
+# * [X] Simulate gravitational interaction between the bodies. (Very naively!)
+# * [ ] Clean up the simulation code (remove Earth/Sun sanity check or move to another file).
 
-AU_METERS=495979e11
+AU_METERS=1.495979e+11
 SOL_MASS_KG=1.989e30
+EARTH_MASS_KG=5.972e24
+GRAVITATIONAL_CONSTANT = 6.67430e-11 # m^3 / kg / s^2
 
-SIMULATION_RADIUS = AU_METERS * 1000
-NUM_BODIES = 10
+SIMULATION_RADIUS = AU_METERS * 2
+VELOCITY_MAX = SIMULATION_RADIUS / 1000000
+MASS_MIN = SOL_MASS_KG / 100
+MASS_MAX = SOL_MASS_KG * 10
+NUM_BODIES = 2
+
+TIME_STEP = 60.0 * 60.0 * 24.0 # seconds
 
 body_locations = np.random.uniform(low=-SIMULATION_RADIUS, high=SIMULATION_RADIUS, size=(NUM_BODIES, 3))
+body_locations[0] = [0.0, 0.0, 0.0]
+body_locations[1] = [AU_METERS, 0.0, 0.0]
+body_mass = np.random.uniform(low=MASS_MIN, high=MASS_MAX, size=NUM_BODIES)
+body_mass[0] = SOL_MASS_KG
+body_mass[1] = EARTH_MASS_KG
+body_velocities = np.random.uniform(low=-VELOCITY_MAX, high=VELOCITY_MAX, size=(NUM_BODIES, 3))
+body_velocities[0] = [0.0, 0.0, 0.0]
+body_velocities[1] = [0.0, 29.78e3, 0.0] # earth's velocity
+
+def calcuate_acceleration_vector(body_no):
+    global body_locations
+    global body_mass
+
+    acceleration = np.array([0.0, 0.0, 0.0])
+    location = body_locations[body_no]
+    for i in range(NUM_BODIES):
+        if i == body_no:
+            continue
+        location2 = body_locations[i]
+        delta_location = location2 - location
+        r = np.sqrt((delta_location * delta_location).sum())
+        normal_vector = delta_location / r
+        accel_scalar = GRAVITATIONAL_CONSTANT * body_mass[i] / r / r
+        accel_vector = normal_vector * accel_scalar
+        acceleration += accel_vector
+    return acceleration
 
 fig = plt.figure()
 
@@ -63,7 +97,12 @@ ax.set_zlabel("Z")
 
 def update(frame):
     global body_locations
-    body_locations += np.random.normal(0, SIMULATION_RADIUS/100, body_locations.shape)
+    global body_velocities
+
+    accelerations = np.stack([calcuate_acceleration_vector(i) for i in range(body_locations.shape[0])])
+    body_velocities += accelerations * TIME_STEP
+    body_locations += body_velocities * TIME_STEP
+
     sc._offsets3d = (body_locations[:, 0], body_locations[:, 1], body_locations[:, 2])
     return sc,
 
