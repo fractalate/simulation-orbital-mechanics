@@ -4,78 +4,82 @@ from matplotlib.animation import FuncAnimation
 
 import measure
 
-# Idea for project: do the moons of Jupiter with an animation
-
-# In this test I want to create a bunch of point-bodies in 3d space and simulate their
-# gravitational interactions. This should produce a cloud of points with some flying
-# off outside of the simulation bounds.
-
-# Steps
-#
-# * [X] Decide on units.
-# * [X] Generate some points in 3D space and plot them.
-# * [X] Give the points velocity and have them move in space.
-# * [X] Give the points some mass.
-# * [X] Simulate gravitational interaction between the bodies. (Very naively!)
-# * [ ] Clean up the simulation code (remove Earth/Sun sanity check or move to another file).
-
 SIMULATION_RADIUS = measure.astronomical_unit * 2
-MASS_MIN = measure.mass_sun / 200
-MASS_MAX = measure.mass_sun / 5
 NUM_BODIES = 100
 
 TIME_STEP = 60.0 * 60.0 * 24.0 # seconds
 
+# Disperse the bodies through the simulation space uniformly.
 body_locations = np.random.uniform(low=-SIMULATION_RADIUS, high=SIMULATION_RADIUS, size=(NUM_BODIES, 3))
+# However, we want a disc shape, so squash along the z-axis.
 body_locations[:, 2] /= 50.0
-body_mass = np.random.normal(loc=measure.mass_neptune, scale=measure.mass_mercury, size=NUM_BODIES)
-body_velocities = np.zeros_like(body_locations) # np.random.uniform(low=-VELOCITY_MAX, high=VELOCITY_MAX, size=(NUM_BODIES, 3))
 
+# Create a normal distribution of masses around the mass of Uranus,
+# varying on the order of the mass of Earth.
+body_mass = np.random.normal(loc=measure.mass_uranus, scale=measure.mass_earth, size=NUM_BODIES)
 
 # Put the sun in the center of the simulation.
 body_locations[0] = [0.0, 0.0, 0.0]
 body_mass[0] = measure.mass_sun
-body_velocities[0] = [0.0, 0.0, 0.0]
 
 # This assumes body 0 is the sun and it finds the velocity for a stable enough orbit
 def calculate_initial_velocity(body_no):
     global body_locations
     global body_mass
 
+    # The sun is initially stationary.
     if body_no == 0:
         return np.array([0.0, 0.0, 0.0])
 
-    location = body_locations[0]
-    location2 = body_locations[body_no]
-    delta_location = location2 - location
+    # Find the normal vector pointing from the sun to the indicated body.
+    delta_location = body_locations[body_no] - body_locations[0]
     r = np.sqrt((delta_location * delta_location).sum())
     normal_vector = delta_location / r
-    down_vector = np.array([0.0, 0.0, -1.0])
-    r = np.sqrt((delta_location * delta_location).sum())
-    velocity_to_preserve_orbit = np.sqrt(measure.gravitational_constant * body_mass[0] / r)
-    orbit_preserving_velocity_vector = np.cross(normal_vector, down_vector) * velocity_to_preserve_orbit
-    return orbit_preserving_velocity_vector
 
-for i in range(NUM_BODIES):
-    body_velocities[i] = calculate_initial_velocity(i)
+    # In our simulation, since our disc is squished in the z-axis, we consider
+    # "down" to be in the negative z direction.
+    down_vector = np.array([0.0, 0.0, -1.0])
+
+    # Determine the velocity that would be required for a perfectly circular
+    # orbit (we don't quite have that because of our spread in the z-axis and
+    # choice of down vector).
+    velocity_to_preserve_orbit = np.sqrt(measure.gravitational_constant * body_mass[0] / r)
+
+    # The cross product of the normal vector and the down vector should be roughly a
+    # unit vector and point in the direction that the body should be moving initially
+    # to orbit, scale it by the previously determined velocity to start the orbit.
+    return np.cross(normal_vector, down_vector) * velocity_to_preserve_orbit
+
+# Give each body a velocity.
+body_velocities = np.array([calculate_initial_velocity(i) for i in range(NUM_BODIES)])
 
 # Not a great implementation for this.
 def calculate_acceleration_vector(body_no):
     global body_locations
     global body_mass
 
-    acceleration = np.array([0.0, 0.0, 0.0])
     location = body_locations[body_no]
+    acceleration = np.array([0.0, 0.0, 0.0])
+
+    # Determine the acceleration due to all the other masses in the system.
     for i in range(NUM_BODIES):
         if i == body_no:
             continue
-        location2 = body_locations[i]
-        delta_location = location2 - location
+
+        # Find the normal vector pointing from the indicated body to each other body
+        # (the direction it'll accelerate).
+        delta_location = body_locations[i] - location
         r = np.sqrt((delta_location * delta_location).sum())
         normal_vector = delta_location / r
+
+        # The acceleration is toward the other mass and is calculated by the gravity equation
+        # a = GM/r^2.
         accel_scalar = measure.gravitational_constant * body_mass[i] / r / r
         accel_vector = normal_vector * accel_scalar
+
+        # Accumulate all the accelerations.
         acceleration += accel_vector
+
     return acceleration
 
 fig = plt.figure()
