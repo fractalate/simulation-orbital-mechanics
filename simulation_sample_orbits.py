@@ -117,4 +117,4 @@ def update(frame):
 
 ani = FuncAnimation(fig, update, frames=200, interval=50, blit=False)
 
-ani.save("output_sample_orbits.gif", writer="pillow", fps=30)
+ani.save("output/simulation_sample_orbits.gif", writer="pillow", fps=30)
