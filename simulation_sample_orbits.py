@@ -3,85 +3,14 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 import measure
+from simulation import Simulation
 
 SIMULATION_RADIUS = measure.astronomical_unit * 2
 NUM_BODIES = 100
 
 TIME_STEP = 60.0 * 60.0 * 24.0  # seconds
 
-class SimulationSampleOrbits():
-    def __init__(self):
-        # Simulation Paramaters
-        self.time_step = 60.0 * 60.0 * 24.0  # seconds
-
-        # Simulation State
-        self.body_mass = np.empty((0, 3), dtype=float)
-        self.body_locations = np.empty((0, 3), dtype=float)
-        self.body_velocities = np.empty((0, 3), dtype=float)
-
-    def get_number_of_bodies(self):
-        return self.body_locations.shape[0]
-
-    def calculate_acceleration_vector(self, body_no):
-        location = self.body_locations[body_no]
-        acceleration = np.array([0.0, 0.0, 0.0])
-
-        # Determine the acceleration due to all the other masses in the system.
-        for i in range(self.get_number_of_bodies()):
-            if i == body_no:
-                continue
-
-            # Find the normal vector pointing from the indicated body to each other body
-            # (the direction it'll accelerate).
-            delta_location = self.body_locations[i] - location
-            r = np.linalg.norm(delta_location)
-            if r != 0.0:
-                normal_vector = delta_location / r
-
-                # The acceleration is toward the other mass and is calculated by the gravity equation
-                # a = GM/r^2.
-                accel_scalar = measure.gravitational_constant * self.body_mass[i] / r / r
-                accel_vector = normal_vector * accel_scalar
-
-                # Accumulate all the accelerations.
-                acceleration += accel_vector
-
-        return acceleration
-
-    def calculate_gravitational_vector(self, position):
-        """
-        Calculates the gravitational acceleration at a given position or array of positions.
-        Supports both single 3D position (shape: (3,)) and meshgrid/array of positions (shape: (..., 3)).
-        """
-        position = np.asarray(position)
-        acceleration = np.zeros_like(position, dtype=float)
-
-        # Handle single position (shape: (3,))
-        if position.ndim == 1:
-            for i in range(self.get_number_of_bodies()):
-                normal_vector = self.body_locations[i] - position
-                r = np.linalg.norm(normal_vector)
-                if r != 0.0:
-                    normal_vector /= r
-                    accel_scalar = self.body_mass[i] / r / r
-                    accel_vector = normal_vector * accel_scalar
-                    acceleration += accel_vector
-            return measure.gravitational_constant * acceleration
-
-        # Handle meshgrid/array of positions (shape: (..., 3))
-        else:
-            # acceleration shape: (..., 3)
-            for i in range(self.get_number_of_bodies()):
-                normal_vector = self.body_locations[i] - position  # broadcast
-                r = np.linalg.norm(normal_vector, axis=-1, keepdims=True)
-                # Avoid division by zero
-                mask = r != 0.0
-                accel_vector = np.zeros_like(normal_vector)
-                accel_scalar = np.zeros_like(r)
-                accel_scalar[mask] = self.body_mass[i] / (r[mask] ** 2)
-                accel_vector[mask[..., 0]] = (normal_vector[mask[..., 0]] / r[mask]) * accel_scalar[mask]
-                acceleration += accel_vector
-            return measure.gravitational_constant * acceleration
+simulation = Simulation()
 
 # TODO instead of injecting directly into the simulation, make some methods to add new bodies
 def setup_sample_orbits(simulation):
@@ -128,7 +57,6 @@ def setup_sample_orbits(simulation):
     # Give each body a velocity.
     simulation.body_velocities = np.array([calculate_initial_velocity(i) for i in range(NUM_BODIES)])
 
-simulation = SimulationSampleOrbits()
 setup_sample_orbits(simulation)
 
 fig = plt.figure()
