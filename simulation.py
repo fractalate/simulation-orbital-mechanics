@@ -51,7 +51,7 @@ class Simulation():
     def calculate_gravitational_vector(self, position):
         """
         Calculates the gravitational acceleration at a given position or array of positions.
-        Supports both single 3D position (shape: (3,)) and meshgrid/array of positions (shape: (..., 3)).
+        Supports both single 3D position (shape: (3,)) and meshgrid/array of positions (shape: (3, ...)).
         """
         position = np.asarray(position)
         acceleration = np.zeros_like(position, dtype=float)
@@ -68,17 +68,16 @@ class Simulation():
                     acceleration += accel_vector
             return measure.gravitational_constant * acceleration
 
-        # Handle meshgrid/array of positions (shape: (..., 3))
+        # Handle meshgrid/array of positions (shape: (3, ...))
         else:
-            # acceleration shape: (..., 3)
+            # acceleration shape: (3, ...)
             for i in range(self.get_number_of_bodies()):
-                normal_vector = self.body_locations[i] - position  # broadcast
-                r = np.linalg.norm(normal_vector, axis=-1, keepdims=True)
-                # Avoid division by zero
+                normal_vector = self.body_locations[i][:, np.newaxis, np.newaxis, np.newaxis] - position
+                r = np.linalg.norm(normal_vector, axis=0, keepdims=True)
                 mask = r != 0.0
                 accel_vector = np.zeros_like(normal_vector)
                 accel_scalar = np.zeros_like(r)
                 accel_scalar[mask] = self.body_mass[i] / (r[mask] ** 2)
-                accel_vector[mask[..., 0]] = (normal_vector[mask[..., 0]] / r[mask]) * accel_scalar[mask]
+                accel_vector += np.where(mask, normal_vector / r * accel_scalar, 0)
                 acceleration += accel_vector
             return measure.gravitational_constant * acceleration
