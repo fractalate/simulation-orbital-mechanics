@@ -7,7 +7,7 @@
 Required python libraries:
 
 ```bash
-pip install numpy matplotlib
+pip install numpy matplotlib pyarrow
 ```
 
 ## Examples
