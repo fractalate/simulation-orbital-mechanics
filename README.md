@@ -16,5 +16,5 @@ Try some of these examples:
 
 * Produce an animation of sample orbits:
   ```bash
-  python3 simulation_sample_orbits.py`
+  python3 simulation_sample_orbits.py -o out.gif
   ```
