@@ -16,7 +16,7 @@ parser.add_argument("-o", "--output", default="out", help="output directory to s
 parser.add_argument("-f", "--force", action="store_true", default=False, help="set if you want to generate output in an existing output directory")
 parser.add_argument("-n", "--number-of-bodies", type=int, default=10, help="number of bodies in the simulation")
 parser.add_argument("-t", "--time-step", type=float, default=60.0*60.0*24.0, help="time step for the simulation in seconds")
-parser.add_argument("-l", "--number-of-steps", type=int, default=5000, help="number of steps to simulate")
+parser.add_argument("-l", "--number-of-steps", type=int, default=300, help="number of steps to simulate")
 args = parser.parse_args()
 
 if args.number_of_bodies <= 0:
@@ -109,11 +109,11 @@ for i in range(NUMBER_OF_BODIES):
     })
     with pq.ParquetWriter(out_dir / f"body_{i}.parquet", body_schema) as writer:
         table = pa.table({
-            "x": position_buffer[i, :, 0],
-            "y": position_buffer[i, :, 1],
-            "z": position_buffer[i, :, 2],
-            "vx": velocity_buffer[i, :, 0],
-            "vy": velocity_buffer[i, :, 1],
-            "vz": velocity_buffer[i, :, 2],
+            "x": position_buffer[:, i, 0],
+            "y": position_buffer[:, i, 1],
+            "z": position_buffer[:, i, 2],
+            "vx": velocity_buffer[:, i, 0],
+            "vy": velocity_buffer[:, i, 1],
+            "vz": velocity_buffer[:, i, 2],
         }, schema=body_schema)
         writer.write_table(table)

@@ -22,6 +22,7 @@ class Simulation():
         self.body_velocities.append(velocity)
         return body_no
 
+    # TODO also make oa function to calculate this for all bodies
     def calculate_acceleration_vector(self, body_no):
         location = self.body_locations[body_no]
         acceleration = np.array([0.0, 0.0, 0.0])
