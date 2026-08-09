@@ -14,19 +14,17 @@ pip install numpy matplotlib pyarrow
 
 Try some of these examples:
 
-* Produce an animation of sample orbits:
+* Produce sample orbit simulation data in the `out` directory:
   ```bash
   python3 simulation_sample_orbits.py -o out
   ```
-  which will create the `out` directory containing simulation data.
-* Render orbits as an animation:
+* Show animation of simulation data from the `out` directory:
   ```bash
   python3 render_orbits.py out
   ```
-  or
+* Render animated gif of simulation data from the `out` directory to `out.gif`:
   ```bash
   python3 render_orbits.py -o out.gif out
   ```
-  which will render `out.gif` from the simulation data in the `out` directory.
 
 Some scripts have additional command line arguments. Use `--help` for more information.
